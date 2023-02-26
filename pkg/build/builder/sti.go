@@ -131,9 +131,9 @@ func makeVolumeSpec(src localObjectBuildSource, mountPath string) s2iapi.VolumeS
 
 // Build executes S2I build based on configured builder, S2I builder factory
 // and S2I config validator
-func (s *S2IBuilder) Build() error {
+func (s *S2IBuilder) Build(ctx context.Context) error {
 	var err error
-	ctx := timing.NewContext(context.Background())
+	//ctx := timing.NewContext(context.Background())
 	defer func() {
 		s.build.Status.Stages = timing.AppendStageAndStepInfo(s.build.Status.Stages, timing.GetStages(ctx))
 		HandleBuildStatusUpdate(s.build, s.client, nil)

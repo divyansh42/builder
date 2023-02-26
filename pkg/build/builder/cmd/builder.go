@@ -261,8 +261,8 @@ func (c *builderConfig) addGitConfig(gitClient git.Repository, gitConfigFile str
 }
 
 // clone is responsible for cloning the source referenced in the buildconfig
-func (c *builderConfig) clone() error {
-	ctx := timing.NewContext(context.Background())
+func (c *builderConfig) clone(ctx context.Context) error {
+	//ctx := timing.NewContext(context.Background())
 	var sourceRev *buildapiv1.SourceRevision
 	defer func() {
 		c.build.Status.Stages = timing.GetStages(ctx)
@@ -313,8 +313,8 @@ func (c *builderConfig) clone() error {
 	return nil
 }
 
-func (c *builderConfig) extractImageContent() error {
-	ctx := timing.NewContext(context.Background())
+func (c *builderConfig) extractImageContent(ctx context.Context) error {
+	//ctx := timing.NewContext(context.Background())
 	defer func() {
 		c.build.Status.Stages = timing.GetStages(ctx)
 		bld.HandleBuildStatusUpdate(c.build, c.buildsClient, nil)
@@ -352,15 +352,15 @@ func (c *builderConfig) execute(b builder) error {
 type dockerBuilder struct{}
 
 // Build starts a Docker build.
-func (dockerBuilder) Build(dockerClient bld.DockerClient, sock string, buildsClient buildclientv1.BuildInterface, build *buildapiv1.Build, cgLimits *s2iapi.CGroupLimits) error {
-	return bld.NewDockerBuilder(dockerClient, buildsClient, build, cgLimits).Build()
+func (dockerBuilder) Build(ctx context.Context, dockerClient bld.DockerClient, sock string, buildsClient buildclientv1.BuildInterface, build *buildapiv1.Build, cgLimits *s2iapi.CGroupLimits) error {
+	return bld.NewDockerBuilder(dockerClient, buildsClient, build, cgLimits).Build(ctx)
 }
 
 type s2iBuilder struct{}
 
 // Build starts an S2I build.
-func (s2iBuilder) Build(dockerClient bld.DockerClient, sock string, buildsClient buildclientv1.BuildInterface, build *buildapiv1.Build, cgLimits *s2iapi.CGroupLimits) error {
-	return bld.NewS2IBuilder(dockerClient, sock, buildsClient, build, cgLimits).Build()
+func (s2iBuilder) Build(ctx context.Context, dockerClient bld.DockerClient, sock string, buildsClient buildclientv1.BuildInterface, build *buildapiv1.Build, cgLimits *s2iapi.CGroupLimits) error {
+	return bld.NewS2IBuilder(dockerClient, sock, buildsClient, build, cgLimits).Build(ctx)
 }
 
 func runBuild(out io.Writer, builder builder, isolation, ociRuntime, storageDriver, storageOptions string) error {
@@ -388,7 +388,7 @@ func RunS2IBuild(out io.Writer, isolation, ociRuntime, storageDriver, storageOpt
 }
 
 // RunGitClone performs a git clone using the build defined in the environment
-func RunGitClone(out io.Writer) error {
+func RunGitClone(ctx context.Context, out io.Writer) error {
 	serviceability.InitLogrusFromKlog()
 	logVersion()
 	cfg, err := newBuilderConfigFromEnvironment(out, false, "", "", "", "")
@@ -398,7 +398,7 @@ func RunGitClone(out io.Writer) error {
 	if cfg.cleanup != nil {
 		defer cfg.cleanup()
 	}
-	return cfg.clone()
+	return cfg.clone(ctx)
 }
 
 // RunManageDockerfile manipulates the dockerfile for docker builds.
@@ -408,7 +408,7 @@ func RunGitClone(out io.Writer) error {
 // with new FROM image information based on the imagestream/imagetrigger
 // and also adds some env and label values to the dockerfile based on
 // the build information.
-func RunManageDockerfile(out io.Writer) error {
+func RunManageDockerfile(ctx context.Context, out io.Writer) error {
 	serviceability.InitLogrusFromKlog()
 	logVersion()
 	cfg, err := newBuilderConfigFromEnvironment(out, false, "", "", "", "")
@@ -418,12 +418,12 @@ func RunManageDockerfile(out io.Writer) error {
 	if cfg.cleanup != nil {
 		defer cfg.cleanup()
 	}
-	return bld.ManageDockerfile(bld.InputContentPath, cfg.build)
+	return bld.ManageDockerfile(ctx, bld.InputContentPath, cfg.build)
 }
 
 // RunExtractImageContent extracts files from existing images
 // into the build working directory.
-func RunExtractImageContent(out io.Writer) error {
+func RunExtractImageContent(ctx context.Context, out io.Writer) error {
 	serviceability.InitLogrusFromKlog()
 	logVersion()
 	cfg, err := newBuilderConfigFromEnvironment(out, true, "", "", "", "")
@@ -433,7 +433,7 @@ func RunExtractImageContent(out io.Writer) error {
 	if cfg.cleanup != nil {
 		defer cfg.cleanup()
 	}
-	return cfg.extractImageContent()
+	return cfg.extractImageContent(ctx)
 }
 
 // logVersion logs the version of openshift-builder.

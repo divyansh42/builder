@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -101,7 +102,7 @@ func NewCommandS2IBuilder(name string) *cobra.Command {
 }
 
 // NewCommandDockerBuilder provides a CLI handler for Docker build type
-func NewCommandDockerBuilder(name string) *cobra.Command {
+func NewCommandDockerBuilder(ctx context.Context, name string) *cobra.Command {
 	var isolation, ociRuntime, storageDriver, storageOptions string
 
 	defaultConfig, err := config.DefaultConfig()
@@ -138,13 +139,13 @@ func NewCommandDockerBuilder(name string) *cobra.Command {
 
 // NewCommandGitClone manages cloning the git source for a build.
 // It also manages binary build input content.
-func NewCommandGitClone(name string) *cobra.Command {
+func NewCommandGitClone(ctx context.Context, name string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   name,
 		Short: "Git clone source code",
 		Long:  gitCloneLong,
 		Run: func(c *cobra.Command, args []string) {
-			err := cmd.RunGitClone(c.OutOrStderr())
+			err := cmd.RunGitClone(ctx, c.OutOrStderr())
 			kcmdutil.CheckErr(err)
 		},
 	}
@@ -152,13 +153,13 @@ func NewCommandGitClone(name string) *cobra.Command {
 	return cmd
 }
 
-func NewCommandManageDockerfile(name string) *cobra.Command {
+func NewCommandManageDockerfile(ctx context.Context, name string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   name,
 		Short: "Manage a dockerfile for a docker build",
 		Long:  manageDockerfileLong,
 		Run: func(c *cobra.Command, args []string) {
-			err := cmd.RunManageDockerfile(c.OutOrStderr())
+			err := cmd.RunManageDockerfile(ctx, c.OutOrStderr())
 			kcmdutil.CheckErr(err)
 		},
 	}
@@ -166,13 +167,13 @@ func NewCommandManageDockerfile(name string) *cobra.Command {
 	return cmd
 }
 
-func NewCommandExtractImageContent(name string) *cobra.Command {
+func NewCommandExtractImageContent(ctx context.Context, name string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   name,
 		Short: "Extract build input content from existing images",
 		Long:  extractImageContentLong,
 		Run: func(c *cobra.Command, args []string) {
-			err := cmd.RunExtractImageContent(c.OutOrStderr())
+			err := cmd.RunExtractImageContent(ctx, c.OutOrStderr())
 			kcmdutil.CheckErr(err)
 		},
 	}

@@ -49,10 +49,10 @@ func NewDockerBuilder(dockerClient DockerClient, buildsClient buildclientv1.Buil
 }
 
 // Build executes a Docker build
-func (d *DockerBuilder) Build() error {
+func (d *DockerBuilder) Build(ctx context.Context) error {
 
 	var err error
-	ctx := timing.NewContext(context.Background())
+	//ctx := timing.NewContext(context.Background())
 	defer func() {
 		d.build.Status.Stages = timing.AppendStageAndStepInfo(d.build.Status.Stages, timing.GetStages(ctx))
 		HandleBuildStatusUpdate(d.build, d.client, nil)

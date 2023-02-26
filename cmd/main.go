@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/openshift/builder/pkg/build/builder/timing"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -27,6 +29,8 @@ func main() {
 	if reexec.Init() {
 		return
 	}
+
+	ctx := timing.NewContext(context.Background())
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM)
@@ -63,7 +67,7 @@ func main() {
 	}
 
 	basename := filepath.Base(os.Args[0])
-	command := CommandFor(basename)
+	command := CommandFor(ctx, basename)
 
 	flags := command.Flags()
 	var logLevel logLevel
@@ -95,20 +99,20 @@ func main() {
 
 // CommandFor returns the appropriate command for this base name,
 // or the OpenShift CLI command.
-func CommandFor(basename string) *cobra.Command {
+func CommandFor(ctx context.Context, basename string) *cobra.Command {
 	var cmd *cobra.Command
 
 	switch basename {
 	case "openshift-sti-build", "openshift-sti-build-in-a-user-namespace":
 		cmd = NewCommandS2IBuilder(basename)
 	case "openshift-docker-build", "openshift-docker-build-in-a-user-namespace":
-		cmd = NewCommandDockerBuilder(basename)
+		cmd = NewCommandDockerBuilder(ctx, basename)
 	case "openshift-git-clone":
-		cmd = NewCommandGitClone(basename)
+		cmd = NewCommandGitClone(ctx, basename)
 	case "openshift-manage-dockerfile":
-		cmd = NewCommandManageDockerfile(basename)
+		cmd = NewCommandManageDockerfile(ctx, basename)
 	case "openshift-extract-image-content", "openshift-extract-image-content-in-a-user-namespace":
-		cmd = NewCommandExtractImageContent(basename)
+		cmd = NewCommandExtractImageContent(ctx, basename)
 	default:
 		fmt.Printf("unknown command name: %s\n", basename)
 		os.Exit(1)

@@ -104,8 +104,8 @@ func GitClone(ctx context.Context, gitClient GitClient, gitSource *buildapiv1.Gi
 // with new FROM image information based on the imagestream/imagetrigger
 // and also adds some env and label values to the dockerfile based on
 // the build information.
-func ManageDockerfile(dir string, build *buildapiv1.Build) error {
-	ctx := timing.NewContext(context.Background())
+func ManageDockerfile(ctx context.Context, dir string, build *buildapiv1.Build) error {
+	//ctx := timing.NewContext(context.Background())
 	defer func() {
 		build.Status.Stages = timing.GetStages(ctx)
 		clientConfig, err := restclient.InClusterConfig()
